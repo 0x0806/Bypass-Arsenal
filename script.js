@@ -131,9 +131,11 @@ class BypassArsenal {
     bindEvents() {
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.setupEventListeners());
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => this.setupEventListeners(), 100);
+            });
         } else {
-            this.setupEventListeners();
+            setTimeout(() => this.setupEventListeners(), 100);
         }
     }
 
@@ -199,15 +201,31 @@ class BypassArsenal {
     switchTab(tabName) {
         try {
             // Remove active class from all tabs and content
-            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            navTabs.forEach(tab => {
+                if (tab && tab.classList) {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            tabContents.forEach(content => {
+                if (content && content.classList) {
+                    content.classList.remove('active');
+                }
+            });
 
             // Add active class to selected tab and content
             const selectedTab = document.querySelector(`[data-tab="${tabName}"]`);
             const selectedContent = document.getElementById(tabName);
             
-            if (selectedTab) selectedTab.classList.add('active');
-            if (selectedContent) selectedContent.classList.add('active');
+            if (selectedTab && selectedTab.classList) {
+                selectedTab.classList.add('active');
+            }
+            if (selectedContent && selectedContent.classList) {
+                selectedContent.classList.add('active');
+            }
 
             this.showNotification(`Switched to ${tabName.charAt(0).toUpperCase() + tabName.slice(1)} module`, 'success');
         } catch (error) {
@@ -217,7 +235,10 @@ class BypassArsenal {
 
     generatePayload() {
         const generateBtn = document.getElementById('generateBtn');
-        if (!generateBtn) return;
+        if (!generateBtn) {
+            console.warn('Generate button not found');
+            return;
+        }
         
         generateBtn.classList.add('loading');
         generateBtn.disabled = true;
@@ -1664,7 +1685,10 @@ if (sw.ElapsedMilliseconds < {DELAY} * 0.8) Environment.Exit(1);`
 
     showNotification(message, type = 'info') {
         const notificationsContainer = document.getElementById('notifications');
-        if (!notificationsContainer) return;
+        if (!notificationsContainer) {
+            console.log(`Notification: ${message}`);
+            return;
+        }
         
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
@@ -1678,7 +1702,7 @@ if (sw.ElapsedMilliseconds < {DELAY} * 0.8) Environment.Exit(1);`
         notificationsContainer.appendChild(notification);
         
         setTimeout(() => {
-            if (notification.parentNode) {
+            if (notification && notification.parentNode) {
                 notification.remove();
             }
         }, 5000);
