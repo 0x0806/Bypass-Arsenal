@@ -1,0 +1,360 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bypass Arsenal - Advanced EDR Bypass Generator</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Bypass Arsenal</span>
+                </div>
+                <div class="header-info">
+                    <span class="version">v2.1.0</span>
+                    <span class="developer">Developed by 0x0806</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            <div class="disclaimer-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>CRITICAL SECURITY DISCLAIMER</span>
+            </div>
+            <div class="disclaimer-content">
+                <p><strong>⚠️ FOR EDUCATIONAL AND AUTHORIZED PENETRATION TESTING ONLY ⚠️</strong></p>
+                <p>Bypass Arsenal generates advanced, real-world EDR/AV/MDR/XDR bypass payloads for legitimate security research and authorized penetration testing. By using this tool, you acknowledge that:</p>
+                <ul>
+                    <li>You have explicit written authorization from system owners</li>
+                    <li>You understand the legal implications and potential criminal liability</li>
+                    <li>You will not use this tool for unauthorized access or malicious purposes</li>
+                    <li>The developer (0x0806) assumes no responsibility for misuse or legal consequences</li>
+                    <li>These are real, functional payloads designed to bypass security controls</li>
+                    <li>You are a security professional conducting authorized assessments</li>
+                    <li>All generated payloads are for defensive research purposes only</li>
+                </ul>
+                <p><strong>⚖️ Unauthorized use may violate federal laws including the Computer Fraud and Abuse Act (CFAA) and similar international legislation. Users are solely responsible for compliance with all applicable laws and regulations.</strong></p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="generator">
+                <i class="fas fa-code"></i>
+                <span>Generator</span>
+            </button>
+            <button class="nav-tab" data-tab="obfuscation">
+                <i class="fas fa-mask"></i>
+                <span>Obfuscation</span>
+            </button>
+            <button class="nav-tab" data-tab="encoder">
+                <i class="fas fa-lock"></i>
+                <span>Encoder</span>
+            </button>
+            <button class="nav-tab" data-tab="templates">
+                <i class="fas fa-file-code"></i>
+                <span>Templates</span>
+            </button>
+            <button class="nav-tab" data-tab="analytics">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analytics</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Generator Tab -->
+            <div class="tab-content active" id="generator">
+                <div class="dashboard-grid">
+                    <!-- Payload Configuration -->
+                    <div class="card payload-config">
+                        <div class="card-header">
+                            <h3><i class="fas fa-cogs"></i> Payload Configuration</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Payload Type</label>
+                                <select id="payloadType" class="select-input">
+                                    <option value="shellcode">Shellcode Injection</option>
+                                    <option value="dll">DLL Injection</option>
+                                    <option value="process">Process Hollowing</option>
+                                    <option value="reflective">Reflective DLL</option>
+                                    <option value="memory">Memory Patching</option>
+                                    <option value="syscall">Direct Syscalls</option>
+                                    <option value="unhook">API Unhooking</option>
+                                    <option value="apc">APC Injection</option>
+                                    <option value="edr_bypass">EDR Bypass Combo</option>
+                                    <option value="av_bypass">AV Bypass Techniques</option>
+                                    <option value="mdr_bypass">MDR Evasion</option>
+                                    <option value="xdr_bypass">XDR Circumvention</option>
+                                    <option value="amsi_bypass">AMSI Bypass</option>
+                                    <option value="etw_bypass">ETW Evasion</option>
+                                    <option value="powershell_invoke">PowerShell Invoke</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Target Architecture</label>
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="arch" value="x64" checked>
+                                        <span>x64</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="arch" value="x86">
+                                        <span>x86</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Evasion Techniques</label>
+                                <div class="checkbox-grid">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="antiDebug">
+                                        <span>Anti-Debug</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="antiVM">
+                                        <span>Anti-VM</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="antiSandbox">
+                                        <span>Anti-Sandbox</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="sleepObfuscation">
+                                        <span>Sleep Obfuscation</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Output Format</label>
+                                <select id="outputFormat" class="select-input">
+                                    <option value="cpp">C/C++</option>
+                                    <option value="csharp">C#</option>
+                                    <option value="powershell">PowerShell</option>
+                                    <option value="python">Python</option>
+                                    <option value="rust">Rust</option>
+                                    <option value="assembly">Assembly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="card advanced-options">
+                        <div class="card-header">
+                            <h3><i class="fas fa-sliders-h"></i> Advanced Options</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Shellcode Input</label>
+                                <textarea id="shellcodeInput" placeholder="Enter your shellcode here (hex format)"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Custom Variables</label>
+                                <input type="text" id="customVars" placeholder="variable1,variable2,variable3">
+                            </div>
+                            <div class="form-group">
+                                <label>Encryption Key</label>
+                                <input type="text" id="encryptionKey" placeholder="Optional encryption key">
+                            </div>
+                            <div class="form-group">
+                                <label>Delay (ms)</label>
+                                <input type="number" id="delayMs" value="5000" min="0" max="60000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generation Controls -->
+                    <div class="card generation-controls">
+                        <div class="card-header">
+                            <h3><i class="fas fa-play"></i> Generation</h3>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-primary btn-generate" id="generateBtn">
+                                <i class="fas fa-magic"></i>
+                                Generate Payload
+                            </button>
+                            <button class="btn btn-secondary" id="randomizeBtn">
+                                <i class="fas fa-random"></i>
+                                Randomize
+                            </button>
+                            <button class="btn btn-info" id="validateBtn">
+                                <i class="fas fa-check-circle"></i>
+                                Validate
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Output -->
+                    <div class="card output-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-terminal"></i> Generated Payload</h3>
+                            <div class="card-actions">
+                                <button class="btn-icon" id="copyBtn" title="Copy to clipboard">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <button class="btn-icon" id="downloadBtn" title="Download">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn-icon" id="shareBtn" title="Share">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <pre id="generatedPayload" class="code-output">// Generated payload will appear here...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Obfuscation Tab -->
+            <div class="tab-content" id="obfuscation">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-mask"></i> Code Obfuscation</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Obfuscation Level</label>
+                                <select class="select-input">
+                                    <option>Light</option>
+                                    <option>Medium</option>
+                                    <option>Heavy</option>
+                                    <option>Extreme</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Input Code</label>
+                                <textarea placeholder="Paste your code here for obfuscation..."></textarea>
+                            </div>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-magic"></i>
+                                Obfuscate Code
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Encoder Tab -->
+            <div class="tab-content" id="encoder">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-lock"></i> Payload Encoder</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Encoding Type</label>
+                                <select class="select-input">
+                                    <option>Base64</option>
+                                    <option>XOR</option>
+                                    <option>AES</option>
+                                    <option>RC4</option>
+                                    <option>Custom</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Raw Payload</label>
+                                <textarea placeholder="Enter raw payload to encode..."></textarea>
+                            </div>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-lock"></i>
+                                Encode Payload
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Tab -->
+            <div class="tab-content" id="templates">
+                <div class="templates-grid">
+                    <div class="template-card">
+                        <div class="template-header">
+                            <h4>Process Injection</h4>
+                            <span class="template-tag">C++</span>
+                        </div>
+                        <p>Advanced process injection with EDR evasion</p>
+                        <button class="btn btn-sm">Use Template</button>
+                    </div>
+                    <div class="template-card">
+                        <div class="template-header">
+                            <h4>Reflective DLL</h4>
+                            <span class="template-tag">C#</span>
+                        </div>
+                        <p>Reflective DLL loading with API unhooking</p>
+                        <button class="btn btn-sm">Use Template</button>
+                    </div>
+                    <div class="template-card">
+                        <div class="template-header">
+                            <h4>Syscall Injection</h4>
+                            <span class="template-tag">ASM</span>
+                        </div>
+                        <p>Direct syscall implementation</p>
+                        <button class="btn btn-sm">Use Template</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-content" id="analytics">
+                <div class="dashboard-grid">
+                    <div class="stats-card">
+                        <div class="stat">
+                            <div class="stat-value">1,247</div>
+                            <div class="stat-label">Payloads Generated</div>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stat">
+                            <div class="stat-value">89%</div>
+                            <div class="stat-label">Success Rate</div>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stat">
+                            <div class="stat-value">42</div>
+                            <div class="stat-label">EDR Bypassed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <i class="fas fa-circle status-online"></i>
+                <span>System Online</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-clock"></i>
+                <span id="currentTime"></span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-shield-alt"></i>
+                <span>EDR Arsenal Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notifications" class="notifications"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
